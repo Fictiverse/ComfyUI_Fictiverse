@@ -11,18 +11,17 @@ class ColorCorrection:
         pass
     
     @classmethod
-    def INPUT_TYPES(s):
+    def INPUT_TYPES(cls):  # Use cls instead of s
         return {
             "required": {
                 "image": ("IMAGE",),
                 "original_image": ("IMAGE",),
-                }),
             },
         }
+    
     RETURN_TYPES = ("IMAGE",)
     FUNCTION = "color_correction"
     CATEGORY = "Fictiverse"
-
 
     def color_correction(self, image, original_image):
         correction_target = cv2.cvtColor(np.asarray(image), cv2.COLOR_RGB2LAB)
@@ -31,18 +30,8 @@ class ColorCorrection:
             correction_target,
             channel_axis=2
         ), cv2.COLOR_LAB2RGB).astype("uint8")
-        #inverted_image = self.invert_image(corrected_image)
         return (corrected_image,)
 
-
-    #def invert_image(self, image):
-    #    inverted_image = 1.0 - image
-    #    return inverted_image
-        
-
-# A dictionary that contains all nodes you want to export with their names
-# NOTE: names should be globally unique
 NODE_CLASS_MAPPINGS = {
     "Color correction": ColorCorrection
 }
-
