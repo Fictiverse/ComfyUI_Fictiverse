@@ -5,9 +5,14 @@ from PIL import Image
 from enum import Enum
 import torch
 
+# PIL to Tensor
+def pil2tensor(image):
+    return torch.from_numpy(np.array(image).astype(np.float32) / 255.0).unsqueeze(0)
+
 # Tensor to PIL
 def tensor2pil(image):
     return Image.fromarray(np.clip(255. * image.cpu().numpy().squeeze(), 0, 255).astype(np.uint8))
+    
 
 # Define 'BlendType' and 'blendLayers' as needed
 def blendLayers(image1, image2):
@@ -55,9 +60,10 @@ class ColorCorrection:
         # You need to implement the blendLayers function and BlendType.LUMINOSITY.
         # The following line assumes that it exists in your code:
         image = blendLayers(Image.fromarray(corrected_image), Image.fromarray(pil_original_image))
-        
+        img = pil2tensor(image)
+        #images_out = torch.cat(pil2tensor(image), dim=0)
         #Return image is in wrong type ?
-        return (image,)
+        return (img,)
 
     
 NODE_CLASS_MAPPINGS = {
