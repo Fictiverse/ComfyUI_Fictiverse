@@ -48,24 +48,34 @@ class ColorCorrection:
         
         
     def color_correction(self, original_image, correction):
-        
+
         pil_original_image = np.array(tensor2pil(original_image))
         pil_correction = np.array(tensor2pil(correction))
-        
-        # Perform color correction
+
         original_lab = cv2.cvtColor(pil_original_image, cv2.COLOR_RGB2LAB)
         corrected_lab = cv2.cvtColor(pil_correction, cv2.COLOR_RGB2LAB)
         corrected_image = cv2.cvtColor(match_histograms(original_lab, corrected_lab, channel_axis=2), cv2.COLOR_LAB2RGB).astype("uint8")
 
-        # You need to implement the blendLayers function and BlendType.LUMINOSITY.
-        # The following line assumes that it exists in your code:
-        image = blendLayers(Image.fromarray(corrected_image), Image.fromarray(pil_original_image))
-        img = pil2tensor(image)
-        #images_out = torch.cat(pil2tensor(image), dim=0)
-        #Return image is in wrong type ?
-        return (img,)
+        # Use 'correction' as the template image
+        template_image = corrected_image  # Use the 'correction' as the template image
 
-    
+        # Perform template matching with 'correction' as the template
+        result = cv2.matchTemplate(corrected_image, template_image, cv2.TM_CCOEFF_NORMED)
+        
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+        top_left = max_loc
+        h, w = template_image.shape[:2]
+        bottom_right = (top_left[0] + w, top_left[1] + h)
+        
+        # Draw a rectangle around the matched area (you can modify this part)
+        cv2.rectangle(corrected_image, top_left, bottom_right, (0, 0, 255), 2)
+
+        # Convert the result back to a PIL image
+        result_image = Image.fromarray(corrected_image)
+
+        img = pil2tensor(result_image)
+        return (img,)
+ 
 NODE_CLASS_MAPPINGS = {
-    "Color correction": ColorCorrection
+        "Color correction": ColorCorrection
 }
