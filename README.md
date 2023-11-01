@@ -9,4 +9,7 @@
 ## Nodes
 
 ### Color Correction
-Match image color from image reference
+Try to Match image color from image reference (kinda bad)   
+
+### Displace Images with Mask
+Modified version of WAS node, displace images from a mask with directonal amplitudes.
