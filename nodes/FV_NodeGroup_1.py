@@ -68,7 +68,7 @@ class Color_Correction:
         return (img,)
         
         
-class Displace_Image:
+class Displace_Image: #Modified version of WAS node : https://github.com/WASasquatch/was-node-suite-comfyui
     def __init__(self):
         pass
 
