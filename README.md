@@ -8,8 +8,14 @@
 
 ## Nodes
 
-### Color Correction
+### Color Correction (obsolete)
 Try to Match image color from image reference (kinda bad)   
 
 ### Displace Images with Mask
-Modified version of WAS node, displace images from a mask with directonal amplitudes.
+Modified version of WAS node, displace images from a mask with directonal amplitudes.   
+
+### Add Noise to Image with Mask
+Add noise to an image inside a given mask   
+
+### Displace Image with Depth
+Try to displace an image based of his depth
