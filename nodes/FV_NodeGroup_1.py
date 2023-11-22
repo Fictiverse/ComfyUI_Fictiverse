@@ -150,7 +150,10 @@ class AddNoiseToImageWithMask: #Modified version of WAS node : https://github.co
 
         return (out_images, )
         
-     
+
+
+
+####################################################################   
 
 class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com/WASasquatch/was-node-suite-comfyui
     def __init__(self):
@@ -164,35 +167,81 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
                 "Depth": ("IMAGE",),
                 "X": ("INT", {"default": 0, "min": -4096, "max": 4096, "step": 1}),
                 "Y": ("INT", {"default": 0, "min": -4096, "max": 4096, "step": 1}),
-                "Zoom": ("FLOAT", {"default": 1.0, "min": 0.1, "max": 100, "step": 0.1}),
+                "Zoom": ("FLOAT", {"default": 0.0, "min": -1, "max": 1, "step": 0.1}),
                 "LayerCount": ("INT", {"default": 8, "min": 2, "max": 255, "step": 1}),
+                "Frames": ("INT", {"default": 4, "min": 2, "max": 128, "step": 1}),
             },
         }
 
     RETURN_TYPES = ("IMAGE","IMAGE",)
-    RETURN_NAMES = ("images", "combined",)
+    RETURN_NAMES = ("Frames", "Layers",)
     FUNCTION = "displaceImageWithDepth"
     CATEGORY = "Fictiverse"
 
-    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, LayerCount):
+    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, LayerCount, Frames ):
     
         Tools = Tools_Class()
 
+        result_layers = []
         result_images = []
         img = tensor2pil(Image[0])
         mask = tensor2pil(Depth[0])
         mask = Tools.resize_and_crop(mask, img.size)
         
-        layers, combined = Tools.apply_perspective_transformation(img, mask, X, Y, Zoom, LayerCount)
-        print("Number of images ::::::::", len(layers))
+        fX = X/Frames
+        fY = Y/Frames      
+        fZ = Zoom/Frames  
+        
+        for f in range(Frames):  
+            tx = fX * f
+            ty = fY * f
+            z = fZ * f
+            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, LayerCount)
+            result_images.append(pil2tensor(combined))
 
         for layer in layers:
-            result_images.append(pil2tensor(layer))
+            result_layers.append(pil2tensor(layer))
 
+        result_layers = torch.cat(result_layers, dim=0)
         result_images = torch.cat(result_images, dim=0)
+        
+        return (result_images, result_layers)
+    
+####################################################################
 
-        #return (result_images, ) 
-        return (result_images, pil2tensor(combined))
+
+
+
+class ZoomWithDepth:
+    def __init__(self):
+        pass
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "Image": ("IMAGE",),
+                "Depth": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE",)
+    RETURN_NAMES = ("image",)
+    FUNCTION = "zoomWithDepth"
+    CATEGORY = "Fictiverse"
+
+    def zoomWithDepth(self, Image, Depth):
+    
+        Tools = Tools_Class()
+
+        img = tensor2pil(Image[0])
+        mask = tensor2pil(Depth[0])
+        mask = Tools.resize_and_crop(mask, img.size)
+        
+        combined= Tools.parallax_zoom(img, mask)
+
+
+        return ( pil2tensor(combined))
 ####################################################################
 
 
@@ -352,12 +401,13 @@ class Tools_Class():
         return imageLayers  
 
     def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, num_layers):
+        
         # Convert PIL images to NumPy arrays
         image = np.array(image_pil)
         depth_map = np.array(depth_map_pil)
         parallax_factor = 1
         if num_layers < 1:
-            raise ValueError("Le nombre de couches doit être supérieur ou égal à 1.")
+            raise ValueError("Layers Count must be > 1.")
 
         # Créer un tableau vide pour stocker les couches
         layers = []
@@ -375,7 +425,6 @@ class Tools_Class():
         # Get the size (width and height) of the target image
         width, height = image_pil.size
         imagesCombined = Image.new("RGBA", (width, height), (0, 0, 0, 0)) 
-        #imagesCombined.paste(image_pil, (0, 0))
 
         # Créer les couches en fonction du nombre spécifié
         for i in range(num_layers):
@@ -383,39 +432,14 @@ class Tools_Class():
             layer_min_depth = min_depth + (i / num_layers) * depth_range
             layer_max_depth = min_depth + ((i + 1) / num_layers) * depth_range
 
-
-
-
-
-
-
-
-            # Combine the current merged_image with the imagesCombined
-            #imagesCombined = Image.alpha_composite(imagesCombined, Image.fromarray(merged_image))
-
-
-
-
-
             # Sélectionner les pixels de la depth map qui appartiennent à cette couche
             layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map <= layer_max_depth)
-            #layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map < layer_max_depth)
-            #layer_mask = np.logical_and(depth_map >= layer_min_depth, 0 < 1)
-            color_rgb = image[:, :, :3]
-            alpha_channel = (layer_mask[:, :, 0] * 255).astype(np.uint8)
 
-             # Create an alpha channel with a gradual transition for this layer
-            #alpha_channel = ((depth_map - layer_min_depth) / (layer_max_depth - layer_min_depth))
-            #alpha_channel = np.clip(alpha_channel, 0, 1)  # Ensure values are in the [0, 1] range
-            #alpha_channel = (alpha_channel[:, :, 0] * 255).astype(np.uint8)
-
-
-
-
-
+            image_rgb = image[:, :, :3]
+            layer_alpha = (layer_mask[:, :, 0] * 255).astype(np.uint8)
 
             # Create an RGBA image by stacking the RGB channels with the alpha channel
-            merged_image = np.dstack((color_rgb, alpha_channel))
+            layer_rgba = np.dstack((image_rgb, layer_alpha))
             
             # Calculate the parallax_factor for this layer
             parallax_factor = i / (num_layers - 1)
@@ -425,11 +449,11 @@ class Tools_Class():
             ty_offset = int(ty * parallax_factor)
             
             # Determine the new dimensions of the translated image
-            new_height = merged_image.shape[0]
-            new_width = merged_image.shape[1]
+            new_height = layer_rgba.shape[0]
+            new_width = layer_rgba.shape[1]
 
             # Create an empty image with the same shape as merged_image
-            translated_mask = np.zeros_like(merged_image)
+            translated_mask = np.zeros_like(layer_rgba)
 
             # Calculate the cropping box
             x1, x2 = max(0, -tx_offset), min(new_width, new_width - tx_offset)
@@ -440,14 +464,12 @@ class Tools_Class():
             src_y1, src_y2 = max(0, ty_offset), min(new_height, new_height + ty_offset)
 
             # Copy the pixels from the original image to the translated image
-            translated_mask[y1:y2, x1:x2] = merged_image[src_y1:src_y2, src_x1:src_x2]
+            translated_mask[y1:y2, x1:x2] = layer_rgba[src_y1:src_y2, src_x1:src_x2]
             
             z = i*zoom/num_layers + 1
             translated_mask = self.cv2_clipped_zoom(translated_mask, z)
             layer_image = Image.fromarray(translated_mask)
             layers.append(layer_image)
-
-
 
             # Replace visible pixels of image1 with corresponding pixels from image2
             imagesCombined.paste(layer_image, (0, 0), layer_image)
@@ -455,6 +477,53 @@ class Tools_Class():
 
         return layers, imagesCombined
  
+
+
+    def parallax_zoom(self, image, depth_map):
+        # Convertir les images PIL en tableaux NumPy
+        image_array = np.array(image)
+        depth_map_array = np.array(depth_map)
+        depth_map_array = depth_map_array[:, :, 0]
+        radius = 5
+        # Normaliser la carte de profondeur entre 0 et 1
+        normalized_depth_map = depth_map_array.astype(float) / 255.0
+
+        # Calculer le centre de l'image pour l'utiliser comme point de référence
+        center_x, center_y = image.width // 2, image.height // 2
+
+        # Créer une grille de coordonnées pour l'image
+        y_coords, x_coords = np.mgrid[0:image.height, 0:image.width]
+
+        # Calculer les distances par rapport au centre de l'image
+        distances = np.sqrt((x_coords - center_x)**2 + (y_coords - center_y)**2)
+
+        # Agrandir les pixels en fonction de la carte de profondeur
+        scaled_distances = distances + (normalized_depth_map * radius)
+
+        # Interpoler les nouvelles positions des pixels
+        new_x_coords = ((x_coords - center_x) * (scaled_distances / distances)) + center_x
+        new_y_coords = ((y_coords - center_y) * (scaled_distances / distances)) + center_y
+
+        # Limiter les valeurs pour éviter les débordements
+        new_x_coords = np.clip(new_x_coords, 0, image.width - 1)
+        new_y_coords = np.clip(new_y_coords, 0, image.height - 1)
+
+        # Interpoler les valeurs des pixels pour obtenir la nouvelle image
+        new_image = np.zeros_like(image_array)
+        for i in range(image.height):
+            for j in range(image.width):
+                new_image[i, j] = image_array[new_y_coords[i, j].astype(int), new_x_coords[i, j].astype(int)]
+
+        # Convertir le tableau NumPy en image PIL
+        new_image_pil = Image.fromarray(new_image.astype(np.uint8))
+
+        return new_image_pil
+
+
+
+
+
+
     
 
     def cv2_clipped_zoom(self, img, zoom_factor=0):
@@ -545,4 +614,5 @@ NODE_CLASS_MAPPINGS = {
         "Displace Images with Mask": Displace_Image,
         "Add Noise to Image with Mask": AddNoiseToImageWithMask,
         "Displace Image with Depth": DisplaceImageWithDepth,
+        "Zoom Image with Depth": ZoomWithDepth,
 }
