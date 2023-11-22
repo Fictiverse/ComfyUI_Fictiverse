@@ -555,7 +555,7 @@ class Tools_Class():
         y2, x2 = y1 + height, x1 + width
         bbox = np.array([y1,x1,y2,x2])
         # Map back to original image coordinates
-        bbox = (bbox / zoom_factor).astype(np.int)
+        bbox = (bbox / zoom_factor).astype(np.int32)
         y1, x1, y2, x2 = bbox
         cropped_img = img[y1:y2, x1:x2]
     
