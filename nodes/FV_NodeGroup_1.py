@@ -1,3 +1,4 @@
+from re import S
 import cv2
 import numpy as np
 from skimage.exposure import match_histograms
@@ -6,6 +7,7 @@ from enum import Enum
 import torch
 import torch.nn.functional as F
 from torchvision import transforms
+from random import randint
 
 # PIL to Tensor
 def pil2tensor(image):
@@ -168,6 +170,8 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
                 "X": ("INT", {"default": 0, "min": -4096, "max": 4096, "step": 1}),
                 "Y": ("INT", {"default": 0, "min": -4096, "max": 4096, "step": 1}),
                 "Zoom": ("FLOAT", {"default": 0.0, "min": -1, "max": 1, "step": 0.1}),
+                "Rotation": ("FLOAT", {"default": 0.0, "min": -90, "max": 90, "step": 1}),
+                "Shake": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
                 "LayerCount": ("INT", {"default": 8, "min": 2, "max": 255, "step": 1}),
                 "Frames": ("INT", {"default": 4, "min": 2, "max": 128, "step": 1}),
             },
@@ -178,7 +182,7 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
     FUNCTION = "displaceImageWithDepth"
     CATEGORY = "Fictiverse"
 
-    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, LayerCount, Frames ):
+    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, Rotation, Shake, LayerCount, Frames ):
     
         Tools = Tools_Class()
 
@@ -187,14 +191,16 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
         img = tensor2pil(Image[0])
         mask = tensor2pil(Depth[0])
         mask = Tools.resize_and_crop(mask, img.size)
-        
+
+        shakeX = np.random.randint(low=-100, high=100, size=(Frames,))
+        shakeY = np.random.randint(low=-100, high=100, size=(Frames,))
         fX = X/Frames
-        fY = Y/Frames      
+        fY = Y/Frames  
         fZ = Zoom/Frames  
         
         for f in range(Frames):  
-            tx = fX * f
-            ty = fY * f
+            tx = fX * f + shakeX[f]*(Shake/100)
+            ty = fY * f + shakeY[f]*(Shake/100)
             z = fZ * f
             layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, LayerCount)
             result_images.append(pil2tensor(combined))
