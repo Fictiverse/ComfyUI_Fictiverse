@@ -192,21 +192,26 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
         mask = tensor2pil(Depth[0])
         mask = Tools.resize_and_crop(mask, img.size)
 
-        shakeX = np.random.randint(low=-100, high=100, size=(Frames,))
-        shakeY = np.random.randint(low=-100, high=100, size=(Frames,))
+        shakeX = 0
+        shakeY = 0
         fX = X/Frames
         fY = Y/Frames  
         fZ = Zoom/Frames  
         
-        for f in range(Frames):  
-            tx = fX * f + shakeX[f]*(Shake/100)
-            ty = fY * f + shakeY[f]*(Shake/100)
+        for f in range(Frames): 
+            
+            shakeX = shakeX + np.random.randint(low=-100, high=100)
+            shakeY = shakeY + np.random.randint(low=-100, high=100)
+            
+            tx = fX * f + shakeX*(Shake/100)
+            ty = fY * f + shakeY*(Shake/100)
             z = fZ * f
             layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, LayerCount)
             result_images.append(pil2tensor(combined))
-
-        for layer in layers:
-            result_layers.append(pil2tensor(layer))
+            
+            if f == 0:
+                for layer in layers:
+                    result_layers.append(pil2tensor(layer))
 
         result_layers = torch.cat(result_layers, dim=0)
         result_images = torch.cat(result_images, dim=0)
@@ -439,41 +444,31 @@ class Tools_Class():
             layer_max_depth = min_depth + ((i + 1) / num_layers) * depth_range
 
             # Sélectionner les pixels de la depth map qui appartiennent à cette couche
-            layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map <= layer_max_depth)
-
+            #layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map <= layer_max_depth)
+            layer_mask = depth_map >= layer_min_depth
             image_rgb = image[:, :, :3]
             layer_alpha = (layer_mask[:, :, 0] * 255).astype(np.uint8)
 
+            
             # Create an RGBA image by stacking the RGB channels with the alpha channel
             layer_rgba = np.dstack((image_rgb, layer_alpha))
-            
+ 
+            #layer_rgba = self.edge_padding(layer_rgba, 20)
+
+
             # Calculate the parallax_factor for this layer
             parallax_factor = i / (num_layers - 1)
-            
+
             # Calculate the translation for this layer
             tx_offset = int(tx * parallax_factor)
             ty_offset = int(ty * parallax_factor)
-            
-            # Determine the new dimensions of the translated image
-            new_height = layer_rgba.shape[0]
-            new_width = layer_rgba.shape[1]
+        
+            translated_mask = self.translate_layer(layer_rgba,tx_offset,ty_offset)
 
-            # Create an empty image with the same shape as merged_image
-            translated_mask = np.zeros_like(layer_rgba)
-
-            # Calculate the cropping box
-            x1, x2 = max(0, -tx_offset), min(new_width, new_width - tx_offset)
-            y1, y2 = max(0, -ty_offset), min(new_height, new_height - ty_offset)
-
-            # Calculate the region to copy from the original image
-            src_x1, src_x2 = max(0, tx_offset), min(new_width, new_width + tx_offset)
-            src_y1, src_y2 = max(0, ty_offset), min(new_height, new_height + ty_offset)
-
-            # Copy the pixels from the original image to the translated image
-            translated_mask[y1:y2, x1:x2] = layer_rgba[src_y1:src_y2, src_x1:src_x2]
-            
             z = i*zoom/num_layers + 1
             translated_mask = self.cv2_clipped_zoom(translated_mask, z)
+            
+
             layer_image = Image.fromarray(translated_mask)
             layers.append(layer_image)
 
@@ -578,9 +573,50 @@ class Tools_Class():
 
 
 
+    def translate_layer(self, layer_rgba, tx_offset, ty_offset):
 
 
+        # Determine the new dimensions of the translated image
+        new_height = layer_rgba.shape[0]
+        new_width = layer_rgba.shape[1]
 
+        # Create an empty image with the same shape as merged_image
+        translated_mask = np.zeros_like(layer_rgba)
+
+        # Calculate the cropping box
+        x1, x2 = max(0, -tx_offset), min(new_width, new_width - tx_offset)
+        y1, y2 = max(0, -ty_offset), min(new_height, new_height - ty_offset)
+
+        # Calculate the region to copy from the original image
+        src_x1, src_x2 = max(0, tx_offset), min(new_width, new_width + tx_offset)
+        src_y1, src_y2 = max(0, ty_offset), min(new_height, new_height + ty_offset)
+
+        # Copy the pixels from the original image to the translated image
+        translated_mask[y1:y2, x1:x2] = layer_rgba[src_y1:src_y2, src_x1:src_x2]
+
+        return translated_mask
+
+    def edge_padding(self, image, padding_size):
+        height, width, channels = image.shape
+
+        # Extraction du canal alpha pour déterminer les bords
+        alpha_channel = image[:, :, 3]
+
+        # Création d'un masque autour du contour alpha
+        alpha_mask = np.zeros((height, width), dtype=np.uint8)
+        alpha_mask[alpha_channel < 255] = 1  # Si le pixel n'est pas complètement opaque (alpha < 255), c'est un bord
+
+        # Dilatation du masque pour ajouter du padding
+        kernel = np.ones((padding_size, padding_size), dtype=np.uint8)
+        dilated_mask = cv2.dilate(alpha_mask, kernel, iterations=1)
+
+        # Création d'une copie de l'image avec le padding
+        padded_image = np.copy(image)
+
+        for c in range(channels):  # Appliquer le padding pour chaque canal de couleur
+            padded_image[:, :, c][dilated_mask == 1] = 0  # Mettre à zéro les pixels du bord
+
+        return padded_image
 
 
 
