@@ -174,6 +174,7 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
                 "Shake": ("INT", {"default": 0, "min": 0, "max": 100, "step": 1}),
                 "LayerCount": ("INT", {"default": 8, "min": 2, "max": 255, "step": 1}),
                 "Frames": ("INT", {"default": 4, "min": 2, "max": 128, "step": 1}),
+                "Fill": ("BOOLEAN", {"default": True, "label_on": "Yes", "label_off": "No"}),
             },
         }
 
@@ -182,7 +183,7 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
     FUNCTION = "displaceImageWithDepth"
     CATEGORY = "Fictiverse"
 
-    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, Rotation, Shake, LayerCount, Frames ):
+    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, Rotation, Shake, LayerCount, Frames, Fill):
     
         Tools = Tools_Class()
 
@@ -206,7 +207,7 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
             tx = fX * f + shakeX*(Shake/100)
             ty = fY * f + shakeY*(Shake/100)
             z = fZ * f
-            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, LayerCount)
+            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, LayerCount, Fill)
             result_images.append(pil2tensor(combined))
             
             if f == 0:
@@ -411,7 +412,7 @@ class Tools_Class():
 
         return imageLayers  
 
-    def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, num_layers):
+    def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, num_layers, Fill):
         
         # Convert PIL images to NumPy arrays
         image = np.array(image_pil)
@@ -444,8 +445,10 @@ class Tools_Class():
             layer_max_depth = min_depth + ((i + 1) / num_layers) * depth_range
 
             # Sélectionner les pixels de la depth map qui appartiennent à cette couche
-            #layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map <= layer_max_depth)
-            layer_mask = depth_map >= layer_min_depth
+            layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map <= layer_max_depth)
+            if (Fill):           
+                layer_mask = depth_map >= layer_min_depth
+                
             image_rgb = image[:, :, :3]
             layer_alpha = (layer_mask[:, :, 0] * 255).astype(np.uint8)
 
