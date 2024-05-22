@@ -1,0 +1,15 @@
+[project]
+name = "comfyui_fictiverse"
+description = "Nodes:Color correction."
+version = "1.0.0"
+license = "LICENSE"
+dependencies = ["scikit-image"]
+
+[project.urls]
+Repository = "https://github.com/Fictiverse/ComfyUI_Fictiverse"
+#  Used by Comfy Registry https://comfyregistry.org
+
+[tool.comfy]
+PublisherId = ""
+DisplayName = "ComfyUI_Fictiverse"
+Icon = ""
