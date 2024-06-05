@@ -176,6 +176,8 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
                 "LayerCount": ("INT", {"default": 8, "min": 2, "max": 255, "step": 1}),
                 "Frames": ("INT", {"default": 4, "min": 2, "max": 128, "step": 1}),
                 "Fill": ("BOOLEAN", {"default": True, "label_on": "Yes", "label_off": "No"}),
+                "Erode": ("INT", {"default": 3, "min": 0, "max": 20, "step": 1}),
+                "Blur": ("INT", {"default": 10, "min": 0, "max": 20, "step": 1}),
             },
         }
 
@@ -184,7 +186,7 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
     FUNCTION = "displaceImageWithDepth"
     CATEGORY = "Fictiverse"
 
-    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, Rotation, Shake, LayerCount, Frames, Fill):
+    def displaceImageWithDepth(self, Image, Depth, X, Y, Zoom, Rotation, Shake, LayerCount, Frames, Fill, Erode, Blur):
     
         Tools = Tools_Class()
 
@@ -211,7 +213,7 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
             z = fZ * f
             r = fR * f
 
-            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, r, LayerCount, Fill)
+            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, r, LayerCount, Fill, Erode, Blur)
             result_images.append(pil2tensor(combined))
             
             if f == 0:
@@ -416,7 +418,7 @@ class Tools_Class():
 
         return imageLayers  
 
-    def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, rot, num_layers, Fill):
+    def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, rot, num_layers, Fill, erode, blur):
         
         # Convert PIL images to NumPy arrays
         image = np.array(image_pil)
@@ -443,7 +445,7 @@ class Tools_Class():
         imagesCombined = Image.new("RGBA", (width, height), (0, 0, 0, 0)) 
 
         # Créer une version floutée de l'image
-        image_pil_blurred = image_pil.filter(ImageFilter.GaussianBlur(radius=10))  # Ajustez le rayon de flou selon vos besoins
+        image_pil_blurred = image_pil.filter(ImageFilter.GaussianBlur(radius=blur))  # Ajustez le rayon de flou selon vos besoins
         image_blurred = np.array(image_pil_blurred)
 
         # Créer les couches en fonction du nombre spécifié
@@ -467,7 +469,7 @@ class Tools_Class():
             layer_alpha = (layer_mask[:, :, 0] * 255).astype(np.uint8)
 
                 # Dilate le masque
-            kernel = np.ones((5, 5), np.uint8)  # Ajustez la taille du noyau selon vos besoins
+            kernel = np.ones((erode, erode), np.uint8)  # Ajustez la taille du noyau selon vos besoins
             layer_alpha_dilated = cv2.erode(layer_alpha, kernel, iterations=1)
 
             #layer_alpha_pil = Image.fromarray(layer_alpha_dilated)
