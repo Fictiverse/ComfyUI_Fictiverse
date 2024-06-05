@@ -8,6 +8,7 @@ import torch
 import torch.nn.functional as F
 from torchvision import transforms
 from random import randint
+from PIL import ImageFilter
 
 # PIL to Tensor
 def pil2tensor(image):
@@ -198,7 +199,8 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
         fX = X/Frames
         fY = Y/Frames  
         fZ = Zoom/Frames  
-        
+        fR = Rotation/Frames 
+
         for f in range(Frames): 
             
             shakeX = shakeX + np.random.randint(low=-100, high=100)
@@ -207,7 +209,9 @@ class DisplaceImageWithDepth: #Modified version of WAS node : https://github.com
             tx = fX * f + shakeX*(Shake/100)
             ty = fY * f + shakeY*(Shake/100)
             z = fZ * f
-            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, LayerCount, Fill)
+            r = fR * f
+
+            layers, combined = Tools.apply_perspective_transformation(img, mask, tx, ty, z, r, LayerCount, Fill)
             result_images.append(pil2tensor(combined))
             
             if f == 0:
@@ -412,7 +416,7 @@ class Tools_Class():
 
         return imageLayers  
 
-    def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, num_layers, Fill):
+    def apply_perspective_transformation(self, image_pil, depth_map_pil, tx, ty, zoom, rot, num_layers, Fill):
         
         # Convert PIL images to NumPy arrays
         image = np.array(image_pil)
@@ -438,6 +442,10 @@ class Tools_Class():
         width, height = image_pil.size
         imagesCombined = Image.new("RGBA", (width, height), (0, 0, 0, 0)) 
 
+        # Créer une version floutée de l'image
+        image_pil_blurred = image_pil.filter(ImageFilter.GaussianBlur(radius=10))  # Ajustez le rayon de flou selon vos besoins
+        image_blurred = np.array(image_pil_blurred)
+
         # Créer les couches en fonction du nombre spécifié
         for i in range(num_layers):
             # Déterminer les valeurs de profondeur minimale et maximale pour cette couche
@@ -446,21 +454,36 @@ class Tools_Class():
 
             # Sélectionner les pixels de la depth map qui appartiennent à cette couche
             layer_mask = np.logical_and(depth_map >= layer_min_depth, depth_map <= layer_max_depth)
-            if (Fill):           
-                layer_mask = depth_map >= layer_min_depth
-                
+            if Fill:           
+                layer_mask = depth_map >= layer_min_depth-10
+
+            fill_mask = depth_map <= layer_max_depth
+
             image_rgb = image[:, :, :3]
+            if Fill:
+                image_rgb = np.where(fill_mask, image_rgb, image_blurred)
+    
+        
             layer_alpha = (layer_mask[:, :, 0] * 255).astype(np.uint8)
 
+                # Dilate le masque
+            kernel = np.ones((5, 5), np.uint8)  # Ajustez la taille du noyau selon vos besoins
+            layer_alpha_dilated = cv2.erode(layer_alpha, kernel, iterations=1)
+
+            #layer_alpha_pil = Image.fromarray(layer_alpha_dilated)
+            #layer_alpha_pil_blurred = layer_alpha_pil.filter(ImageFilter.GaussianBlur(radius=5))  # Ajustez le rayon de flou selon vos besoins
+            #layer_alpha_blurred = np.array(layer_alpha_pil_blurred)
             
             # Create an RGBA image by stacking the RGB channels with the alpha channel
-            layer_rgba = np.dstack((image_rgb, layer_alpha))
- 
+            layer_rgba = np.dstack((image_rgb, layer_alpha_dilated))
+
             #layer_rgba = self.edge_padding(layer_rgba, 20)
 
-
-            # Calculate the parallax_factor for this layer
-            parallax_factor = i / (num_layers - 1)
+            # Normalize i to be in the range [0, 1]
+            t = i / (num_layers - 1)
+            
+            # Apply the easing function
+            parallax_factor = self.ease_in_out_cubic(t)
 
             # Calculate the translation for this layer
             tx_offset = int(tx * parallax_factor)
@@ -470,7 +493,9 @@ class Tools_Class():
 
             z = i*zoom/num_layers + 1
             translated_mask = self.cv2_clipped_zoom(translated_mask, z)
-            
+
+            # Apply rotation
+            translated_mask = self.rotate_image(translated_mask, rot)
 
             layer_image = Image.fromarray(translated_mask)
             layers.append(layer_image)
@@ -481,6 +506,30 @@ class Tools_Class():
 
         return layers, imagesCombined
  
+    def ease_in_out_cubic(self, x):
+        """Cubic ease-in-out function."""
+        if x < 0.5:
+            return 4 * x * x * x
+        else:
+            return 1 - pow(-2 * x + 2, 3) / 2
+
+    def alpha_composite(self, foreground, background):
+        if foreground.shape != background.shape:
+            raise ValueError("Les images doivent avoir la même taille pour la composition alpha")
+
+        fg_rgb = foreground[:, :, :3]
+        fg_alpha = foreground[:, :, 3] / 255.0
+        bg_rgb = background[:, :, :3]
+        bg_alpha = background[:, :, 3] / 255.0
+
+        out_alpha = fg_alpha + bg_alpha * (1 - fg_alpha)
+        out_rgb = np.zeros_like(fg_rgb)
+        for c in range(3):
+            out_rgb[:, :, c] = (fg_rgb[:, :, c] * fg_alpha + bg_rgb[:, :, c] * bg_alpha * (1 - fg_alpha))
+
+        out_rgba = np.dstack((out_rgb, out_alpha * 255)).astype(np.uint8)
+        return out_rgba
+
 
 
     def parallax_zoom(self, image, depth_map):
@@ -525,7 +574,12 @@ class Tools_Class():
 
 
 
-
+    def rotate_image(self, image, angle):
+        (h, w) = image.shape[:2]
+        (cx, cy) = (w // 2, h // 2)
+        M = cv2.getRotationMatrix2D((cx, cy), angle, 1.0)
+        rotated_image = cv2.warpAffine(image, M, (w, h))
+        return rotated_image
 
 
     
