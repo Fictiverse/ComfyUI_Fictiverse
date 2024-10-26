@@ -10,7 +10,7 @@ class IfImageValid:
         return {
             "optional": {  # Indique que les entrées sont facultatives
                 "if_Valid": ("IMAGE",),  # Première image d'entrée (facultative)
-                " else_Image": ("IMAGE",),  # Deuxième image d'entrée (facultative)
+                "else_Image": ("IMAGE",),  # Deuxième image d'entrée (facultative)
             },
         }
 
