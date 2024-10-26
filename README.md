@@ -10,7 +10,7 @@
 
 Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/ComfyUI-Depthflow-Nodes) if you are here for 3D parallax
 
-```Scale Selector``` : Select a image scale preset.   
+```Scale Selector``` : Select an image scale preset.   
 ```If Image Valid``` : Select the second image if the first in not valid.
 
 
