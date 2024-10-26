@@ -15,7 +15,7 @@ class IfImageValid:
         }
 
     RETURN_TYPES = ("IMAGE",)
-    RETURN_NAMES = ("output",)
+    RETURN_NAMES = ("IMAGE",)
     FUNCTION = "selectBest"
     CATEGORY = "Fictiverse"
 
