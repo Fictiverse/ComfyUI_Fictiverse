@@ -8,14 +8,9 @@
 
 ## Nodes
 
-### Color Correction (obsolete)
-Try to Match image color from image reference (kinda bad)   
+Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/ComfyUI-Depthflow-Nodes) if you are here for 3D parallax
 
-### Displace Images with Mask
-Modified version of WAS node, displace images from a mask with directonal amplitudes.   
+```Scale Selector``` : Select a image scale preset.   
+```If Image Valid``` : Select the second input if the first in not valid.
 
-### Add Noise to Image with Mask
-Add noise to an image inside a given mask   
 
-### Displace Image with Depth
-Try to displace an image based of his depth
