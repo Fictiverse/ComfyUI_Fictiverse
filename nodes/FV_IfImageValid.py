@@ -1,5 +1,5 @@
-from PIL import Image
 import numpy as np
+import torch
 
 class IfImageValid:
     def __init__(self):
@@ -25,7 +25,8 @@ class IfImageValid:
         elif else_Image is not None:
             return (else_Image,)
         else:
-            return (Image.fromarray(np.zeros((512, 512, 3), dtype=np.uint8)),)         
+            black_image = torch.zeros((1, 32, 32, 3), dtype=torch.uint8) 
+            return (black_image,)
 
 # Mapping de la classe
 NODE_CLASS_MAPPINGS = {
