@@ -11,6 +11,8 @@
 Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/ComfyUI-Depthflow-Nodes) if you are here for 3D parallax
 
 ```Scale Selector``` : Select an image scale preset.   
-```If Image Valid``` : Select the second image if the first in not valid.
+```If Image Valid``` : Select the second image if the first in not valid.   
+```Is Valid``` : Check if image is valid.   
+```None If Same Image``` : Return a tiny black image is two images are the same.   
 
 
