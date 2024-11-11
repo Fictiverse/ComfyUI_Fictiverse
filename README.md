@@ -11,13 +11,13 @@
 Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/ComfyUI-Depthflow-Nodes) if you are here for 3D parallax
 
 ```Essential Params + Expand``` : cfg, steps, sampler, scheduler, denoise in one node   
-```Image Params + Expand``` : Size, ratio, orientation, hires and batch in one node 
-```Video Params + Expand``` : Size, ratio, orientation, frames and FPS in one node 
+```Image Params + Expand``` : Size, ratio, orientation, hires and batch in one node    
+```Video Params + Expand``` : Size, ratio, orientation, frames and FPS in one node    
    
 ```If Image Valid``` : Select the second image if the first in not valid.   
 ```Is Valid``` : Check if image is valid.   
 ```None If Same Image``` : Return a tiny black image is two images are the same.   
    
-```Add Margin With Color``` : Add margin on top or on the bottom, useful for image to video watermarks.
+```Add Margin With Color``` : Add margin on top or on the bottom, useful for image to video watermarks.   
 
 
