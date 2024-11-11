@@ -15,7 +15,7 @@ Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/Co
 ```Video Params + Expand``` : Size, ratio, orientation, frames and FPS in one node    
    
 ```If Image Valid``` : Select the second image if the first in not valid.   
-```Is Valid``` : Check if image is valid.   
+```Is Valid``` : Return True if the image is valid.
 ```None If Same Image``` : Return a tiny black image is two images are the same.   
    
 ```Add Margin With Color``` : Add margin on top or on the bottom, useful for image to video watermarks.   
