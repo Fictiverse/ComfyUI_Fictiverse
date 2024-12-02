@@ -4,7 +4,7 @@ import math
 
 
 class ImageParams:
-    RATIOS = ["1:1", "5:4", "4:3", "3:2", "16:9", "21:9"]
+    RATIOS = ["1:1", "5:4", "4:3", "3:2", "16:9", "2:1", "21:9", "32:9"]
     
     def __init__(self):
         pass
