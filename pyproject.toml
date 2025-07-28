@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_fictiverse"
 description = "Nodes:Essential Params, Image Params, Video Params, Add Margin With Color, Resize to megapixels"
-version = "1.0.0"
+version = "1.0.1"
 license = { file = "LICENSE" }
 dependencies = []
 
@@ -10,6 +10,6 @@ Repository = "https://github.com/Fictiverse/ComfyUI_Fictiverse"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = "fictiverse"
+PublisherId = "Fictiverse"
 DisplayName = "ComfyUI_Fictiverse"
 Icon = ""
