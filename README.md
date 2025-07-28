@@ -19,5 +19,6 @@ Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/Co
 ```None If Same Image``` : Return a tiny black image is two images are the same.   
    
 ```Add Margin With Color``` : Add margin on top or on the bottom, useful for image to video watermarks.   
+```Resize to megapixels``` : Resize a given width and height to the given megapixel value.
 
 
