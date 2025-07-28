@@ -11,5 +11,5 @@ Repository = "https://github.com/Fictiverse/ComfyUI_Fictiverse"
 
 [tool.comfy]
 PublisherId = "Fictiverse"
-DisplayName = "ComfyUI_Fictiverse"
+DisplayName = "ComfyUI Fictiverse Nodes"
 Icon = ""
