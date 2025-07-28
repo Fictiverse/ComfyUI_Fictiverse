@@ -2,7 +2,7 @@
 name = "comfyui_fictiverse"
 description = "Nodes:Scale Selector, If Image Valid"
 version = "1.0.0"
-license = "LICENSE"
+license = { file = "LICENSE" }
 dependencies = []
 
 [project.urls]
