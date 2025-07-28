@@ -1,6 +1,6 @@
 [project]
 name = "comfyui_fictiverse"
-description = "Nodes:Scale Selector, If Image Valid"
+description = "Nodes:Essential Params, Image Params, Video Params, Add Margin With Color, Resize to megapixels"
 version = "1.0.0"
 license = { file = "LICENSE" }
 dependencies = []
