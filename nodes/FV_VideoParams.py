@@ -12,11 +12,11 @@ class VideoParams:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "base": ("INT", {"default": 768, "min": 128, "max": 4096, "step": 128}),
+                "base": ("INT", {"default": 768, "min": 64, "max": 4096, "step": 64}),
                 "ratio": (VideoParams.RATIOS,),
                 "orientation": ("BOOLEAN", {"default": False, "label_on": "Portrait ▯", "label_off": "Landscape ▭"}),
-                "Frames": ("INT", {"min": 1, "max": 600, "step": 1, "default": 81}),
-                "FPS": ("INT", {"min": 1, "max": 120, "step": 1, "default": 16})
+                "Frames": ("INT", {"min": 7, "max": 511, "step": 6, "default": 49}),
+                "FPS": ("INT", {"min": 1, "max": 64, "step": 1, "default": 8})
             }
         }
     
@@ -37,14 +37,11 @@ class VideoParams:
         width = math.floor(base * ratio / 64) * 64 
         height = math.floor(base / ratio / 64) * 64 
         
-        #Frames = max(7, (math.floor(Frames / 6) * 6) + 1) 
-        megapixels = base*base
-
-
-
+        Frames = max(7, (math.floor(Frames / 6) * 6) + 1) 
+        
         if orientation:
             width, height = height, width
-        return ((width, height, Frames, float(FPS), megapixels),)
+        return ((width, height, Frames, FPS),)
 
 NODE_CLASS_MAPPINGS = {
     "Video Params": VideoParams,
@@ -61,9 +58,9 @@ class VideoParamsExpand:
                 "_": ("VParams",)
             }
         }
-
-    RETURN_TYPES = ("INT", "INT", "INT", "FLOAT", "FLOAT")
-    RETURN_NAMES = ("width", "height", "frames", "fps", "Megapixels")
+    
+    RETURN_TYPES = ("INT", "INT", "INT", "INT")
+    RETURN_NAMES = ("width", "height", "frames", "fps")
     
     FUNCTION = "run"
     CATEGORY = "Fictiverse/Params"
@@ -71,7 +68,7 @@ class VideoParamsExpand:
     def run(self, _):
         if not isinstance(_, tuple):
             raise TypeError("Invalid packet input type")
-        if len(_) != 5:
+        if len(_) != 4:
             raise ValueError("Invalid packet length")
         return _
 
