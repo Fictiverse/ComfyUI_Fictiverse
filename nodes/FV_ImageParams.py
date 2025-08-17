@@ -13,10 +13,10 @@ class ImageParams:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "base": ("INT", {"default": 768, "min": 64, "max": 4096, "step": 64}),
+                "base": ("INT", {"default": 768, "min": 128, "max": 4096, "step": 128}),
                 "ratio": (ImageParams.RATIOS,),
                 "orientation": ("BOOLEAN", {"default": False, "label_on": "Portrait ▯", "label_off": "Landscape ▭"}),
-                "hires": ("FLOAT", {"min": 1, "max": 4, "step": 0.25, "default": 1.5}),
+                "hires": ("FLOAT", {"min": 1, "max": 8, "step": 0.25, "default": 2.0}),
                 "batch": ("INT", {"min": 1, "max": 64, "step": 1, "default": 1})
             }
         }
@@ -38,9 +38,11 @@ class ImageParams:
         width = math.floor(base * ratio / 64) * 64 
         height = math.floor(base / ratio / 64) * 64
         
+        megapixels = (base*base)/1000000
+        
         if orientation:
             width, height = height, width
-        return ((width, height, hires, batch),)
+        return ((width, height, hires, batch, megapixels),)
 
 NODE_CLASS_MAPPINGS = {
     "Image Params": ImageParams,
@@ -59,8 +61,8 @@ class ImageParamsExpand:
             }
         }
     
-    RETURN_TYPES = ("INT", "INT", "FLOAT", "INT")
-    RETURN_NAMES = ("width", "height", "hires ratio", "batch size")
+    RETURN_TYPES = ("INT", "INT", "FLOAT", "INT", "FLOAT")
+    RETURN_NAMES = ("width", "height", "hires ratio", "batch size", "Megapixels")
     
     FUNCTION = "run"
     CATEGORY = "Fictiverse/Params"
