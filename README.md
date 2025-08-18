@@ -6,19 +6,46 @@
 2. git clone in the ```custom_nodes``` folder inside your ComfyUI installation or download as zip and unzip the contents to ```custom_nodes/ComfyUI_Fictiverse```.
 3. Start/restart ComfyUI
 
-## Nodes
+## 📂 Available Nodes
 
-Please check [(akatz-ai/ComfyUI-Depthflow-Nodes)](https://github.com/akatz-ai/ComfyUI-Depthflow-Nodes) if you are here for 3D parallax
+### 🖼 Image Nodes
+- **AddMarginWithColor**  
+  Add margins around an image with a specified color.  
 
-```Essential Params + Expand``` : cfg, steps, sampler, scheduler, denoise in one node   
-```Image Params + Expand``` : Size, ratio, orientation, hires and batch in one node    
-```Video Params + Expand``` : Size, ratio, orientation, frames and FPS in one node    
-   
-```If Image Valid``` : Select the second image if the first in not valid.   
-```Is Valid``` : Return True if the image is valid.   
-```None If Same Image``` : Return a tiny black image is two images are the same.   
-   
-```Add Margin With Color``` : Add margin on top or on the bottom, useful for image to video watermarks.   
-```Resize to megapixels``` : Resize a given width and height to the given megapixel value.
+- **IfImageValid**  
+  Conditional node that checks if an image is valid, outputs one of two options accordingly.  
+
+- **ImageParams**  
+  Provides image-related parameters as outputs.  
+
+- **IsValid**  
+  Simple validator node to check the integrity of inputs.  
+
+- **NoneIfSameImage**  
+  Compares images and returns `None` if they are the same. Useful to prevent redundant processing.  
+
+- **ResizeImagesToMegapixels**  
+  Resize a batch of images to a defined megapixel resolution.  
+
+- **ResizeToMegapixels**  
+  Resize a single image to a defined megapixel resolution.  
+
+### 🎥 Video Nodes
+- **GetLastOutputVideoPath**  
+  Returns the file path of the last generated video in the output folder.  
+
+- **VideoParams**  
+  Provides video-related parameters as outputs.  
+
+### 🧩 Utility / Workflow Nodes
+- **EssentialParams**  
+  Provides essential parameters for workflows.  
+
+- **PromptAssembler**  
+  Assemble 3 text prompts with ajustable strength for each.  
+
+---
+
+
 
 
