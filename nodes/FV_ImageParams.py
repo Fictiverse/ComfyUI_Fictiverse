@@ -70,7 +70,7 @@ class ImageParamsExpand:
     def run(self, _):
         if not isinstance(_, tuple):
             raise TypeError("Invalid packet input type")
-        if len(_) != 4:
+        if len(_) != 5:
             raise ValueError("Invalid packet length")
         return _
 
