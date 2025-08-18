@@ -31,7 +31,7 @@
   Resize a single image to a defined megapixel resolution.  
 
 ### 🎥 Video Nodes
-- **GetLastOutputVideoPath**  
+- **GetLastOutputVideoPath**  (Warning : This node force rhe refresh of the workflow)
   Returns the file path of the last generated video in the output folder.  
 
 - **VideoParams**  
