@@ -2,6 +2,7 @@ import numpy as np
 from PIL import Image
 import folder_paths
 import os
+import re
 
 class SaveSimpleJPG:
     def __init__(self):
@@ -23,12 +24,29 @@ class SaveSimpleJPG:
     OUTPUT_NODE = True
     CATEGORY = "Fictiverse"
 
+    def get_next_counter(self, folder, prefix):
+        if not os.path.exists(folder):
+            return 1
+
+        pattern = re.compile(rf"^{re.escape(prefix)}_(\d+)\.jpg$")
+        max_id = 0
+
+        for f in os.listdir(folder):
+            match = pattern.match(f)
+            if match:
+                num = int(match.group(1))
+                if num > max_id:
+                    max_id = num
+
+        return max_id + 1
+
     def save_jpg(self, images, filename_prefix="ComfyUI", quality=80):
         output_folder = self.output_dir
         os.makedirs(output_folder, exist_ok=True)
 
+        counter = self.get_next_counter(output_folder, filename_prefix)
+
         results = []
-        counter = 1
 
         for image in images:
             i = 255. * image.cpu().numpy()
