@@ -1,7 +1,7 @@
 [project]
 name = "comfyui_fictiverse"
 description = "Nodes:Essential Params, Image Params, Video Params, Add Margin With Color, Resize to megapixels"
-version = "1.0.1"
+version = "1.1.0"
 license = { file = "LICENSE" }
 dependencies = []
 
